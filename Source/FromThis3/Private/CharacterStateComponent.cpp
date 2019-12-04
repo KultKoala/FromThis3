@@ -3,6 +3,7 @@
 
 #include "public/CharacterStateComponent.h"
 #include "public/IdleCharacterState.h"
+#include "public/RollingState.h"
 #include "public/MeleeAttack.h"
 
 // Sets default values for this component's properties
@@ -12,14 +13,6 @@ UCharacterStateComponent::UCharacterStateComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
-	//Initialize All States
-	UIdleCharacterState *IdleState = CreateDefaultSubobject<UIdleCharacterState>(TEXT("Idle"));
-	UMeleeAttack * MeleeAttackState = CreateDefaultSubobject<UMeleeAttack>(TEXT("Melee"));
-
-	CharacterStateMap.Add(EState::Idle, IdleState);
-	CharacterStateMap.Add(EState::Attacking, MeleeAttackState);
-	CurrentState = IdleState;
-
 }
 
 
@@ -27,7 +20,29 @@ UCharacterStateComponent::UCharacterStateComponent()
 void UCharacterStateComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	//Initialize All States
+	UIdleCharacterState *IdleState = NewObject<UIdleCharacterState>();
+	UMeleeAttack * MeleeAttackState = NewObject<UMeleeAttack>();
+	URollingState * RollState = NewObject<URollingState>();
+
+	CurrentState = IdleState;
+
+	CharacterStateArray.Add(IdleState);
+	CharacterStateArray.Add(MeleeAttackState);
+	CharacterStateArray.Add(RollState);
+
+
+	CharacterStateMap.Add(EState::Idle, IdleState);
+	CharacterStateMap.Add(EState::Attacking, MeleeAttackState);
+	CharacterStateMap.Add(EState::Rolling, RollState);
+
+
+	IdleState->SetFlags(RF_StrongRefOnFrame);
+	MeleeAttackState->SetFlags(RF_StrongRefOnFrame);
+	RollState->SetFlags(RF_StrongRefOnFrame);
+
+
 }
 
 
@@ -35,18 +50,25 @@ void UCharacterStateComponent::BeginPlay()
 void UCharacterStateComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	//for (auto item : CharacterStateMap) {
 
+	//	const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EState"), true);
+
+	//	UE_LOG(LogTemp, Warning, TEXT("%s"), *(EnumPtr->GetValueAsString(item.Key)))
+	//}
+
+	
 	// ...
 }
 
 bool UCharacterStateComponent::TryState(EState ETryState)
 {
-
-	if (IsValid(*CharacterStateMap.Find(ETryState))) {
-		return (*CharacterStateMap.Find(ETryState))->TryEnterState(this);
+	UCharacterState * NewState = CharacterStateMap[ETryState];
+	if (NewState != NULL) {
+		return (NewState->TryEnterState(this));
 	}
 	else {
-		UE_LOG(LogTemp,Error, TEXT("Retrieving Invalid Map Data"))
+		UE_LOG(LogTemp,Error, TEXT("Retrieving NULL map data"))
 	}
 
 	return false;
@@ -54,7 +76,14 @@ bool UCharacterStateComponent::TryState(EState ETryState)
 
 EState UCharacterStateComponent::GetCurrentStateEnum()
 {
-	return CurrentState->GetStateEnum();
+	if (CurrentState) {
+		return CurrentState->GetStateEnum();
+	}
+	else {
+		UE_LOG(LogTemp,Error,TEXT("No state found"))
+		return EState::Idle;
+	}
+	
 }
 
 void UCharacterStateComponent::UpdateCurrentState(UCharacterState * NewState)

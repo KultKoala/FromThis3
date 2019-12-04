@@ -6,6 +6,7 @@
 
 URollingState::URollingState(const FObjectInitializer & ObjectInitializer)
 {
+	SetFlags(RF_StrongRefOnFrame);
 }
 
 bool URollingState::TryEnterState(UCharacterStateComponent * StateComp)
@@ -23,6 +24,16 @@ bool URollingState::TryEnterState(UCharacterStateComponent * StateComp)
 			break;
 
 		case EState::Attacking:
+			if (StateComp->GetCurrentStateStatus() >= EStateStatus::CanCancel) {
+				StateComp->UpdateCurrentState(this);
+				return true;
+			}
+			else {
+				return false;
+			}
+			break;
+
+		case EState::Rolling:
 			if (StateComp->GetCurrentStateStatus() >= EStateStatus::CanCancel) {
 				StateComp->UpdateCurrentState(this);
 				return true;

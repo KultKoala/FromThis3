@@ -29,6 +29,9 @@ public:
 	UPROPERTY()
 	TMap<EState, UCharacterState*> CharacterStateMap;
 
+	UPROPERTY()
+	TArray<UCharacterState*> CharacterStateArray;
+
 	//find state in set and try it
 	bool TryState(EState);
 
@@ -56,6 +59,7 @@ public:
 	void SetCurrentStateStatus(EStateStatus NewStateStatus) { CurrentState->StateStatus = NewStateStatus; };
 
 	/*Update Current State to New State and */
+	UFUNCTION()
 	void UpdateCurrentState(UCharacterState * NewState);
 
 

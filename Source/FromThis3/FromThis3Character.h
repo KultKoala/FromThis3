@@ -37,7 +37,7 @@ public:
 
 	//handles player state
 	//must successfully enter correct state before event state is entered
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = CharacterStateComp, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
 	UCharacterStateComponent * CharacterStateComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
@@ -87,6 +87,22 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = Default)
 	TArray<UAnimMontage*> AttackMontages;
 
+	//TODO: Encapsulate to roll event
+	UPROPERTY(EditDefaultsOnly, Category = Default)
+	UAnimMontage * ForwardRoll;
+
+	UPROPERTY(EditDefaultsOnly, Category = Default)
+	UAnimMontage * LeftRoll;
+
+	UPROPERTY(EditDefaultsOnly, Category = Default)
+	UAnimMontage * RightRoll;
+
+	UPROPERTY(EditDefaultsOnly, Category = Default)
+	UAnimMontage * BackRoll;
+
+	UPROPERTY(EditDefaultsOnly, Category = Default)
+	UAnimMontage * BackStep;
+
 	UPROPERTY()
 	int32 AttackNum = 0;
 
@@ -104,5 +120,14 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+
+public:
+	//Utility functions to get info about character. TODO: Move somewhere else?
+
+	//find input relative to camera
+	float GetWeightedForwardRotation();
+
+	float GetWeightedRightRotation();
 };
 

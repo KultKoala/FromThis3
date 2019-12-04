@@ -106,7 +106,9 @@ void AFromThis3Character::TouchStopped(ETouchIndex::Type FingerIndex, FVector Lo
 
 void AFromThis3Character::Attack()
 {
+	UE_LOG(LogTemp,Warning,TEXT("Trying to Attack"))
 	if (CharacterStateComp->TryState(EState::Attacking)) {
+		UE_LOG(LogTemp, Warning, TEXT("Successful Attack"))
 		//TODO Migrate to weapon component code
 		//Check validity of current montage
 		if (AttackMontages.Num()>0) {
@@ -130,8 +132,56 @@ void AFromThis3Character::Attack()
 
 void AFromThis3Character::Roll()
 {
-	if (TargetSystemComp->IsTargetLocked()) {
 
+	if (CharacterStateComp->TryState(EState::Rolling)) {
+		UE_LOG(LogTemp, Warning, TEXT("SuccessfulRoll"))
+
+		float ForwardInput = GetInputAxisValue("MoveForward");
+		float RightInput = GetInputAxisValue("MoveRight");
+
+		UE_LOG(LogTemp, Warning, TEXT("%f   %f"), ForwardInput, RightInput);
+
+		if (TargetSystemComp->IsTargetLocked()) {
+
+			UE_LOG(LogTemp, Warning, TEXT("%f   %f"), ForwardInput, RightInput);
+
+			if (ForwardInput > 0) {
+				PlayAnimMontage(ForwardRoll);
+				UE_LOG(LogTemp, Warning, TEXT("ForwardRoll"))
+			}
+			else if (ForwardInput < 0) {
+				PlayAnimMontage(BackRoll);
+				UE_LOG(LogTemp, Warning, TEXT("BackRoll"))
+			}
+			else if (ForwardInput == 0) {
+				if (RightInput > 0) {
+					PlayAnimMontage(RightRoll);
+					UE_LOG(LogTemp, Warning, TEXT("RightRoll"))
+				}
+				else if (RightInput < 0){
+					PlayAnimMontage(LeftRoll);
+					UE_LOG(LogTemp, Warning, TEXT("LeftRoll"))
+				}
+				else {
+					PlayAnimMontage(BackStep);
+					UE_LOG(LogTemp, Warning, TEXT("Backstep"))
+				}
+			}
+
+
+		}
+		else {
+			float NewActorZRotation = GetWeightedForwardRotation() + GetWeightedRightRotation();
+
+			if (ForwardInput < 0 && RightInput < 0) {
+				SetActorRotation(FRotator(0, 0, NewActorZRotation - 180));
+				PlayAnimMontage(ForwardRoll);
+			}
+			else {
+				SetActorRotation(FRotator(0, 0, NewActorZRotation));
+				PlayAnimMontage(ForwardRoll);
+			}
+		}
 	}
 }
 
@@ -184,5 +234,47 @@ void AFromThis3Character::MoveRight(float Value)
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		// add movement in that direction
 		AddMovementInput(Direction, Value);
+	}
+}
+
+float AFromThis3Character::GetWeightedForwardRotation()
+{
+	//Get Input
+	float ForwardInput = GetInputAxisValue("MoveForward");
+	float RightInput = GetInputAxisValue("MoveRight");
+
+	float CameraRotation = FollowCamera->GetComponentTransform().GetRotation().Z;
+
+	float WeightedForwardVector;
+
+	WeightedForwardVector = FMath::Abs(ForwardInput) / (FMath::Abs(ForwardInput) * FMath::Abs(RightInput));
+
+	if (ForwardInput <= 0) 
+	{
+		return (WeightedForwardVector*CameraRotation);
+	}
+	else 
+	{
+		return (WeightedForwardVector *(CameraRotation + 180.0f));
+	}
+}
+
+float AFromThis3Character::GetWeightedRightRotation()
+{
+	//Get Input
+	float ForwardInput = GetInputAxisValue("MoveForward");
+	float RightInput = GetInputAxisValue("MoveRight");
+
+	float CameraRotation = FollowCamera->GetComponentTransform().GetRotation().Z;
+
+	float WeightedRightVector;
+
+	WeightedRightVector = FMath::Abs(RightInput) / (FMath::Abs(ForwardInput) * FMath::Abs(RightInput));
+
+	if (RightInput > 0){
+		return(WeightedRightVector * (CameraRotation + 90.f));
+	}
+	else {
+		return(WeightedRightVector * (CameraRotation - 90.f));
 	}
 }

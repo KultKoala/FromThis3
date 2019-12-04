@@ -24,5 +24,9 @@ class FROMTHIS3_API URollingState : public UCharacterState
 
 	void PostInitProperties() override;
 
+private:
+
+
+
 
 };

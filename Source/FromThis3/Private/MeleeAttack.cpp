@@ -5,6 +5,7 @@
 
 UMeleeAttack::UMeleeAttack(const FObjectInitializer & ObjectInitializer)
 {
+	SetFlags(RF_StrongRefOnFrame);
 }
 
 bool UMeleeAttack::TryEnterState(UCharacterStateComponent * StateComp)

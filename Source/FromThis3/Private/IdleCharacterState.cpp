@@ -4,6 +4,7 @@
 
 UIdleCharacterState::UIdleCharacterState(const FObjectInitializer & ObjectInitializer)
 {
+	SetFlags(RF_StrongRefOnFrame);
 }
 
 bool UIdleCharacterState::TryEnterState(UCharacterStateComponent * StateComp)
