@@ -172,13 +172,14 @@ void AFromThis3Character::Roll()
 		}
 		else {
 			float NewActorZRotation = GetWeightedForwardRotation() + GetWeightedRightRotation();
+			UE_LOG(LogTemp, Warning, TEXT("%f   %f"), GetWeightedForwardRotation(), GetWeightedForwardRotation());
 
 			if (ForwardInput < 0 && RightInput < 0) {
-				SetActorRotation(FRotator(0, 0, NewActorZRotation - 180));
+				SetActorRotation(FRotator(0, NewActorZRotation - 180,0),ETeleportType::TeleportPhysics);
 				PlayAnimMontage(ForwardRoll);
 			}
 			else {
-				SetActorRotation(FRotator(0, 0, NewActorZRotation));
+				SetActorRotation(FRotator(0, NewActorZRotation, 0), ETeleportType::TeleportPhysics);
 				PlayAnimMontage(ForwardRoll);
 			}
 		}
@@ -247,9 +248,11 @@ float AFromThis3Character::GetWeightedForwardRotation()
 
 	float WeightedForwardVector;
 
-	WeightedForwardVector = FMath::Abs(ForwardInput) / (FMath::Abs(ForwardInput) * FMath::Abs(RightInput));
+	if (ForwardInput == 0) return 0;
 
-	if (ForwardInput <= 0) 
+	WeightedForwardVector = FMath::Abs(ForwardInput) / (FMath::Abs(ForwardInput) + FMath::Abs(RightInput));
+
+	if (ForwardInput > 0) 
 	{
 		return (WeightedForwardVector*CameraRotation);
 	}
@@ -257,6 +260,8 @@ float AFromThis3Character::GetWeightedForwardRotation()
 	{
 		return (WeightedForwardVector *(CameraRotation + 180.0f));
 	}
+
+	return 0.0f;
 }
 
 float AFromThis3Character::GetWeightedRightRotation()
@@ -269,7 +274,10 @@ float AFromThis3Character::GetWeightedRightRotation()
 
 	float WeightedRightVector;
 
-	WeightedRightVector = FMath::Abs(RightInput) / (FMath::Abs(ForwardInput) * FMath::Abs(RightInput));
+	if (RightInput == 0 ) return 0;
+
+
+	WeightedRightVector = FMath::Abs(RightInput) / (FMath::Abs(ForwardInput) + FMath::Abs(RightInput));
 
 	if (RightInput > 0){
 		return(WeightedRightVector * (CameraRotation + 90.f));
@@ -277,4 +285,6 @@ float AFromThis3Character::GetWeightedRightRotation()
 	else {
 		return(WeightedRightVector * (CameraRotation - 90.f));
 	}
+
+	return 0.0f;
 }

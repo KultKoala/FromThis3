@@ -33,6 +33,17 @@ bool UMeleeAttack::TryEnterState(UCharacterStateComponent * StateComp)
 		}
 	break;
 
+	case EState::Rolling:
+		if (StateComp->GetCurrentStateStatus() >= EStateStatus::CanCancel) {
+			StateComp->UpdateCurrentState(this);
+			UE_LOG(LogTemp, Warning, TEXT("Entering Next Attack"))
+				return true;
+		}
+		else {
+			return false;
+		}
+		break;
+
 	default:
 		return false;
 		break;
