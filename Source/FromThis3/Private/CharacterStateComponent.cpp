@@ -13,6 +13,27 @@ UCharacterStateComponent::UCharacterStateComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 
+	//Initialize All States
+	UIdleCharacterState *IdleState = CreateDefaultSubobject<UIdleCharacterState>(TEXT("Idle"));
+	UMeleeAttack * MeleeAttackState = CreateDefaultSubobject<UMeleeAttack>(TEXT("Melee"));
+	URollingState * RollState = CreateDefaultSubobject<URollingState>(TEXT("Roll"));
+
+	CurrentState = IdleState;
+
+	CharacterStateArray.Add(IdleState);
+	CharacterStateArray.Add(MeleeAttackState);
+	CharacterStateArray.Add(RollState);
+
+
+	CharacterStateMap.Add(EState::Idle, IdleState);
+	CharacterStateMap.Add(EState::Attacking, MeleeAttackState);
+	CharacterStateMap.Add(EState::Rolling, RollState);
+
+
+	IdleState->SetFlags(RF_StrongRefOnFrame);
+	MeleeAttackState->SetFlags(RF_StrongRefOnFrame);
+	RollState->SetFlags(RF_StrongRefOnFrame);
+
 }
 
 

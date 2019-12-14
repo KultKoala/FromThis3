@@ -1,7 +1,6 @@
 // Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
 #include "FromThis3Character.h"
-#include "HeadMountedDisplayFunctionLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -10,6 +9,9 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Public/CharacterStateComponent.h"
 #include "Public/TargetSystemComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Public/HealthComponent.h"
+#include "Public/Weapon.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AFromThis3Character
@@ -48,13 +50,34 @@ AFromThis3Character::AFromThis3Character()
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 
+
+	//create character state manager
 	CharacterStateComp = CreateDefaultSubobject <UCharacterStateComponent>(TEXT("CharacterStateComp"));
 
+	//create instance of targeting component plugin
 	TargetSystemComp = CreateDefaultSubobject<UTargetSystemComponent>(TEXT("TargetSystemComp"));
+
+	//create instance of heaslth component
+	HealthComp = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComp"));
+
 }
 
 //////////////////////////////////////////////////////////////////////////
 // Input
+
+void AFromThis3Character::BeginPlay()
+{
+	Super::BeginPlay();
+	if (WeaponInventory.Num() > 0 && CurrentWeaponIndex >= 0 && CurrentWeaponIndex < WeaponInventory.Num()) {
+		TSubclassOf<AWeapon> CurrentWeapon = WeaponInventory[CurrentWeaponIndex];
+		AWeapon *CharacterWeapon = GetWorld()->SpawnActor<AWeapon>(CurrentWeapon);
+		CharacterWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget,false), WeaponSocket);
+		UE_LOG(LogTemp,Warning,TEXT("Weapon is attached"))
+	}
+	else {
+		UE_LOG(LogTemp, Warning, TEXT("Weapon failed to attach"))
+	}
+}
 
 void AFromThis3Character::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
@@ -79,29 +102,6 @@ void AFromThis3Character::SetupPlayerInputComponent(class UInputComponent* Playe
 	PlayerInputComponent->BindAxis("TurnRate", this, &AFromThis3Character::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AFromThis3Character::LookUpAtRate);
-
-	// handle touch devices
-	PlayerInputComponent->BindTouch(IE_Pressed, this, &AFromThis3Character::TouchStarted);
-	PlayerInputComponent->BindTouch(IE_Released, this, &AFromThis3Character::TouchStopped);
-
-	// VR headset functionality
-	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AFromThis3Character::OnResetVR);
-}
-
-
-void AFromThis3Character::OnResetVR()
-{
-	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
-}
-
-void AFromThis3Character::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
-{
-		Jump();
-}
-
-void AFromThis3Character::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
-{
-		StopJumping();
 }
 
 void AFromThis3Character::Attack()
@@ -211,8 +211,10 @@ void AFromThis3Character::LookUpAtRate(float Rate)
 
 void AFromThis3Character::MoveForward(float Value)
 {
+
 	if ((Controller != NULL) && (Value != 0.0f))
 	{
+
 		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);

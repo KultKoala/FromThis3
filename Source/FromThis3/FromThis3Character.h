@@ -10,6 +10,8 @@
 class UCharacterStateComponent;
 class UAnimMontage;
 class UTargetSystemComponent;
+class UHealthComponent;
+class AWeapon;
 
 UCLASS(config=Game)
 class AFromThis3Character : public ACharacter, public ITargetSystemTargetableInterface
@@ -34,6 +36,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Equipment")
+	FName WeaponSocket = "WeaponSocket";
 
 	//handles player state
 	//must successfully enter correct state before event state is entered
@@ -43,12 +47,18 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
 	UTargetSystemComponent * TargetSystemComp;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Components, meta = (AllowPrivateAccess = "true"))
+	UHealthComponent * HealthComp;
+
+	UPROPERTY(EditAnywhere, Category = "Equipment")
+	int32 CurrentWeaponIndex = 0;
+
+	UPROPERTY(EditAnywhere, Category = "Equipment")
+	TArray<TSubclassOf<AWeapon>> WeaponInventory;
+
 
 
 protected:
-
-	/** Resets HMD orientation in VR. */
-	void OnResetVR();
 
 	/** Called for forwards/backward input */
 	void MoveForward(float Value);
@@ -67,12 +77,6 @@ protected:
 	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
 	 */
 	void LookUpAtRate(float Rate);
-
-	/** Handler for when a touch input begins. */
-	void TouchStarted(ETouchIndex::Type FingerIndex, FVector Location);
-
-	/** Handler for when a touch input stops. */
-	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
 
 	// initiate melee attack on input
 	void Attack();
@@ -107,6 +111,8 @@ protected:
 	int32 AttackNum = 0;
 
 protected:
+	virtual void BeginPlay() override;
+
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	// End of APawn interface
@@ -130,4 +136,3 @@ public:
 
 	float GetWeightedRightRotation();
 };
-
